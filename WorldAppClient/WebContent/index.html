@@ -1,0 +1,160 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+    <title>Hello, world!</title>
+    
+    <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+    
+    <script>
+	    function updateCityList(countryId){
+			
+			$.getJSON('http://localhost:8081/getListCity/' + countryId , function(data) { 
+	    		$('ul#cityList').empty();
+	            $.each(data, function(k, v ) {
+	            	  var countryList = $('ul#cityList');
+	            	  var l = $('<li>').attr({class:'list-group-item',id:v.id})
+	            	  					.append($('<span>',{text:v.name}).attr('class','cityname'));
+	            	  
+	            	  l.appendTo(countryList);
+	            });
+	        }); 
+			
+		}
+    
+    	function updateCountryList(){
+    		
+    		$.getJSON('http://localhost:8081/getListCountry', function(data) { 
+	    		$('ul#countryList').empty();
+                $.each(data, function(k, v ) {
+                	  var countryList = $('ul#countryList');
+                	  var l = $('<li>').attr({class:'list-group-item',id:v.id})
+                	  					.append($('<span>',{text:v.name}).attr('class','countryname'))
+                	  					.append($('<span>',{text:v.listCity.length})
+                	  					.attr('class','badge badge-primary badge-pill'));
+                	  
+                	  l.bind('click',function(){
+                		  var countryId		= $(this).attr('id');
+                		  var countryName	= $(this).find('.countryname').text();
+                		  console.log(countryId, countryName);
+                		  
+                		  $.getJSON('http://localhost:8081/getListCity/' + countryId, function(data) { 
+                			  $('ul#cityList').empty();
+                			  $('#details').empty();
+                			  $('<h1>').append(countryName)
+      	  								.appendTo($('#details'));
+      	  					
+      	  					  $.each(data, function(k, v ) {
+	      	  					  var cityList = $('ul#cityList');
+	      	                	  var l = $('<li>').attr({class:'list-group-item',id:v.id})
+	      	                	  					.append($('<span>',{text:v.name}).attr('class','cityname'));
+	      	                	  
+	      	                	  l.appendTo(cityList);
+      	  					  });
+                		  });
+                		  $('#countryid').attr('value', countryId);
+                	  });
+                	  l.appendTo(countryList);
+                });
+            }); 
+    		
+    	}
+    	
+    	
+	    $(document).ready(function() {
+	    	
+	    	updateCountryList();
+	    	$('#newcountry').submit(
+	    			function(e){
+	    				e.preventDefault();
+	    				$.ajax({
+	    					cache	: false,
+	    					method	: 'POST',
+	    				    datatype: 'json',
+	    				    contentType: "application/json",
+	    					url		: 'http://localhost:8081/countries',
+	    				    data	: '{"name": "' + $('#countryname').val() +'"}',
+	    				    success	: function (data){
+	    				    	updateCountryList();
+	    				    },
+	    				   	error: function (jqXhr, textStatus, errorMessage) {
+	    				            $('p').append('Error' + errorMessage);
+	    				    }
+	    				});
+	    			}
+	    	);
+	    	
+	    	
+	    	$('#newcity').submit(
+	    			function(e){
+	    				e.preventDefault();
+	    				$.ajax({
+	    					cache	: false,
+	    					method	: 'POST',
+	    				    datatype: 'json',
+	    				    contentType: "application/json",
+	    					url		: 'http://localhost:8081/cities/' + $('#countryid').val() ,
+	    				    data	: '{"name": "' + $('#cityname').val() +'"}',
+	    				    success	: function (data){
+	    				    	updateCityList($('#countryid').val());
+	    				    },
+	    				   	error: function (jqXhr, textStatus, errorMessage) {
+	    				            $('p').append('Error' + errorMessage);
+	    				    }
+	    				});
+	    			}
+	    	);
+	    });
+	</script>
+   
+  </head>
+  <body>
+  <div class="container">
+	  <div class="row">
+	  	<div class="w-100"></div>
+	  	<h1>Client WS WorldDb</h1>
+	  	
+	  </div>
+	  <div class="row">
+	  	<div class="col-4">
+	  		<form id="newcountry">
+			  <div class="form-group">
+			    <label for="exampleInputEmail1">Paese</label>
+			    <input type="text" class="form-control" id="countryname" placeholder="Nuovo Paese">
+			  </div>
+			  <button type="submit" class="btn btn-primary">Add</button>
+			</form>
+	  		<ul class="list-group" id="countryList">
+	  			<li>lista paesi</li>
+	  		</ul>
+	  	</div>
+	  	
+	  	<div class="col-8">
+	  		<form id="newcity">
+			  <div class="form-group">
+			    <label for="exampleInputEmail1">Città</label>
+			    <input type="text" class="form-control" id="cityname" placeholder="Nuova Citta">
+			    <input type="hidden" class="form-control" id="countryid">
+			  </div>
+			  <button type="submit" class="btn btn-primary">Add</button>
+			</form>
+	  		<h1 id="details"></h1>
+	  		<ul class="list-group" id="cityList">
+	  			<li>lista citta</li>
+	  		</ul>
+	  	</div>
+	  </div>
+  </div>
+    
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+	 <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js" integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js" integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6" crossorigin="anonymous"></script>
+  </body>
+</html>
